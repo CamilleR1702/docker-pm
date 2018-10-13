@@ -1,0 +1,54 @@
+version: '3'
+services:
+  server:
+    image: nginx
+    restart: always
+    ports:
+      - "8080:80"
+    networks:
+      - "panam-net"
+    tty: true
+    # stdin_open: true
+    volumes:
+      - ../code:/code
+      - ./server/default.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - php
+
+  php:
+    # image: php:7.2-fpm
+    # image: panam_php
+    build: ./php
+    image: panam_php
+    restart: always
+    expose:
+      - "9000"
+    volumes:
+      - ../code:/code
+      - ./php/php.ini-development:/usr/local/etc/php/php.ini-development
+      - ./php/php.ini-production:/usr/local/etc/php/php.ini-production
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - "panam-net"
+
+  db:
+    #image: postgres
+    image: panam_db
+    build: ./db
+    image: panam_db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - "panam-net"
+
+networks:
+  panam-net:
+    driver: bridge
+
+#connect psql : 
+#docker exec -it panam_postgres_1 psql -U postgres
